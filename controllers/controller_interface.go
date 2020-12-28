@@ -8,4 +8,5 @@ import (
 type ControllerInterface interface {
 	SignUp(dto *models.UserDTO) error
 	ActivateUser(email, code string) error
+	ResendCode(email string) (string, error)
 }

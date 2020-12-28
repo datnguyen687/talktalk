@@ -1,7 +1,9 @@
 package email
 
 import (
+	"errors"
 	"fmt"
+	"net/http"
 	"talktalk/services/email"
 
 	goSendGrid "github.com/sendgrid/sendgrid-go"
@@ -11,25 +13,34 @@ import (
 // SendGrid ...
 type SendGrid struct {
 	client *goSendGrid.Client
+	email  string
 }
 
 // NewEmailService ...
 func NewEmailService(cfg Config) email.ServiceInterface {
 	return &SendGrid{
 		client: goSendGrid.NewSendClient(cfg.APIKey),
+		email:  cfg.Email,
 	}
 }
 
 // SendActivationCode ...
 func (sg *SendGrid) SendActivationCode(email, code string) error {
-	from := mail.NewEmail("Example User", "test@example.com")
+	from := mail.NewEmail("Example User", sg.email)
 	subject := "TalkTalk activation code"
 	to := mail.NewEmail("Example User", email)
 	plainTextContent := fmt.Sprintf("your activation code is %s - expired after 15 minutes", code)
 	// htmlContent := "<strong>and easy to do anywhere, even with Go</strong>"
 	message := mail.NewSingleEmail(from, subject, to, plainTextContent, "")
 
-	_, err := sg.client.Send(message)
+	response, err := sg.client.Send(message)
 
-	return err
+	if err != nil {
+		return err
+	}
+	if response != nil && response.StatusCode != http.StatusOK {
+		return errors.New(response.Body)
+	}
+
+	return nil
 }

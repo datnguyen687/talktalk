@@ -21,3 +21,14 @@ var messages = map[int]string{
 type UserSignUpResponse struct {
 	handlers.BasicJSONResponse
 }
+
+// UserActivationResponse ...
+type UserActivationResponse struct {
+	handlers.BasicJSONResponse
+}
+
+// UserResendCodeResponse ...
+type UserResendCodeResponse struct {
+	handlers.BasicJSONResponse
+	Code string `json:"code"`
+}

@@ -1,23 +1,35 @@
 package mysql
 
-import "talktalk/models"
+import (
+	"talktalk/models"
+
+	"gorm.io/gorm"
+)
 
 func (sql *sqlService) InsertActivationCode(model *models.ActivationCode) error {
-	db := sql.db.Model(&models.ActivationCode{}).Begin()
+	// db := sql.db.Model(&models.ActivationCode{}).Begin()
 
-	defer func() {
-		if r := recover(); r != nil {
-			db.Rollback()
+	// defer func() {
+	// 	if r := recover(); r != nil {
+	// 		db.Rollback()
+	// 	}
+	// }()
+
+	// db = sql.db.Create(model)
+	// if db.Error != nil {
+	// 	db.Rollback()
+	// 	return db.Error
+	// }
+
+	// return db.Commit().Error
+
+	return sql.db.Transaction(func(tx *gorm.DB) error {
+		if err := sql.db.Model(&models.ActivationCode{}).Create(model).Error; err != nil {
+			return err
 		}
-	}()
 
-	db = sql.db.Create(model)
-	if db.Error != nil {
-		db.Rollback()
-		return db.Error
-	}
-
-	return db.Commit().Error
+		return nil
+	})
 }
 
 func (sql *sqlService) GetActivationCode(email string) (*models.ActivationCode, error) {

@@ -1,6 +1,10 @@
 package mysql
 
-import "talktalk/models"
+import (
+	"talktalk/models"
+
+	"gorm.io/gorm"
+)
 
 func (service *sqlService) FilterUser(filter *models.UserFilter) ([]models.User, error) {
 	db := service.db.Model(&models.User{})
@@ -19,19 +23,31 @@ func (service *sqlService) FilterUser(filter *models.UserFilter) ([]models.User,
 }
 
 func (service *sqlService) InsertUser(model *models.User) error {
-	db := service.db.Begin()
-	defer func() {
-		if r := recover(); r != nil {
-			db.Rollback()
+	// db := service.db.Begin()
+	// defer func() {
+	// 	if r := recover(); r != nil {
+	// 		db.Rollback()
+	// 	}
+	// }()
+
+	// if err := db.Error; err != nil {
+	// 	return err
+	// }
+
+	// if r := db.Model(&models.User{}).Create(model); r.Error != nil {
+	// 	db.Rollback()
+	// 	return r.Error
+	// }
+
+	// return db.Commit().Error
+
+	return service.db.Transaction(func(tx *gorm.DB) error {
+		if err := service.db.Model(&models.User{}).Create(model).Error; err != nil {
+			return err
 		}
-	}()
 
-	if r := db.Model(&models.User{}).Create(model); r.Error != nil {
-		db.Rollback()
-		return r.Error
-	}
-
-	return db.Commit().Error
+		return nil
+	})
 }
 
 func (service *sqlService) GetUser(email string) (*models.User, error) {

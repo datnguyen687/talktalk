@@ -57,6 +57,7 @@ func NewAuthorizationServer(cfg ServerConfig) (handlers.HandlerInterface, error)
 	srv.router.Route("/user", func(r chi.Router) {
 		r.Post("/signup", srv.handleSignUp)
 		r.Get("/activate", srv.handleActivate)
+		r.Get("/resend-code", srv.HandleResendCode)
 	})
 
 	return srv, nil
@@ -72,11 +73,8 @@ func (srv *server) Run() error {
 	return http.ListenAndServe(addr, srv.router)
 }
 
-func (srv *server) sendResponse(w http.ResponseWriter, err error, httpStatus int) {
-	resp := UserSignUpResponse{}
-	resp.Error = err
-
-	data, err := jsoniter.Marshal(&resp)
+func (srv *server) sendResponse(w http.ResponseWriter, resp interface{}, httpStatus int) {
+	data, err := jsoniter.Marshal(resp)
 	if err != nil {
 		log.Println(err)
 		return
@@ -100,47 +98,77 @@ func (srv *server) handlePing(w http.ResponseWriter, r *http.Request) {
 }
 
 func (srv *server) handleSignUp(w http.ResponseWriter, r *http.Request) {
+	resp := UserSignUpResponse{}
 	in, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		srv.sendResponse(w, err, http.StatusBadRequest)
+		resp.Error = err.Error()
+		srv.sendResponse(w, nil, http.StatusBadRequest)
 		return
 	}
 	defer r.Body.Close()
 
 	dto := models.UserDTO{}
 	if err := jsoniter.Unmarshal(in, &dto); err != nil {
-		srv.sendResponse(w, err, http.StatusBadRequest)
+		resp.Error = err.Error()
+		srv.sendResponse(w, &resp, http.StatusBadRequest)
 		return
 	}
 
 	err = srv.controller.SignUp(&dto)
 	if err != nil {
-		srv.sendResponse(w, err, http.StatusInternalServerError)
+		resp.Error = err.Error()
+		srv.sendResponse(w, &resp, http.StatusInternalServerError)
 		return
 	}
 
-	srv.sendResponse(w, nil, http.StatusOK)
+	srv.sendResponse(w, &resp, http.StatusOK)
 }
 
 func (srv *server) handleActivate(w http.ResponseWriter, r *http.Request) {
+	resp := UserActivationResponse{}
 	query := r.URL.Query()
 	emails, ok := query["email"]
 	if !ok || len(emails) <= 0 || emails[0] == "" {
-		srv.sendResponse(w, errors.New("missing email"), http.StatusBadRequest)
+		resp.Error = errors.New("missing email")
+		srv.sendResponse(w, &resp, http.StatusBadRequest)
 		return
 	}
 
 	codes, ok := query["code"]
 	if !ok || len(codes) <= 0 || codes[0] == "" {
-		srv.sendResponse(w, errors.New("missing code"), http.StatusBadRequest)
+		resp.Error = errors.New("missing code")
+		srv.sendResponse(w, &resp, http.StatusBadRequest)
 		return
 	}
 
 	err := srv.controller.ActivateUser(emails[0], codes[0])
 	if err != nil {
-		srv.sendResponse(w, err, http.StatusInternalServerError)
+		resp.Error = err.Error()
+		srv.sendResponse(w, &resp, http.StatusInternalServerError)
 		return
 	}
 
-	srv.sendResponse(w, nil, http.StatusOK)
+	srv.sendResponse(w, &resp, http.StatusOK)
+}
+
+func (srv *server) HandleResendCode(w http.ResponseWriter, r *http.Request) {
+	resp := UserResendCodeResponse{}
+
+	query := r.URL.Query()
+	emails, ok := query["email"]
+	if !ok || len(emails) <= 0 || emails[0] == "" {
+		resp.Error = errors.New("missing email")
+		srv.sendResponse(w, &resp, http.StatusBadRequest)
+		return
+	}
+
+	code, err := srv.controller.ResendCode(emails[0])
+	if err != nil {
+		resp.Error = err.Error()
+		srv.sendResponse(w, &resp, http.StatusOK)
+		return
+	}
+
+	resp.Code = code
+	srv.sendResponse(w, &resp, http.StatusOK)
 }

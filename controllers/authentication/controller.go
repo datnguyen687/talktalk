@@ -71,14 +71,21 @@ func (c *controller) SignUp(dto *models.UserDTO) error {
 	activation := models.ActivationCode{
 		Code:      code,
 		CreatedAt: now,
-		ExpiredAt: now.Add(time.Minute * 15),
+		ExpiredAt: now.Add(time.Minute * time.Duration(MaxActivationCodeLifeSpanInMinutes)),
 		UserEmail: dto.Email,
 	}
+
+	go c.es.SendActivationCode(dto.Email, code)
 
 	return c.ds.InsertActivationCode(&activation)
 }
 
 func (c *controller) ActivateUser(email, code string) error {
+	_, err := c.ds.GetUser(email)
+	if err != nil {
+		return errors.New("unable to find user")
+	}
+
 	ac, err := c.ds.GetActivationCode(email)
 	if err != nil {
 		return err
@@ -87,12 +94,14 @@ func (c *controller) ActivateUser(email, code string) error {
 		return errors.New("code not found")
 	}
 
-	now := time.Now().UTC()
 	if code != ac.Code {
 		return errors.New("code mismatched")
 	}
 
-	if now.After(ac.ExpiredAt) && now.Sub(ac.ExpiredAt).Minutes() > 15 {
+	now := time.Now().UTC()
+	deadLine := ac.ExpiredAt.UTC()
+	if deadLine.Before(now) {
+		go c.ds.DeleteActivationCode(email, code)
 		return errors.New("code has been expired")
 	}
 
@@ -102,7 +111,40 @@ func (c *controller) ActivateUser(email, code string) error {
 		return err
 	}
 
-	err = c.ds.DeleteActivationCode(email, code)
+	return c.ds.DeleteActivationCode(email, code)
+}
 
-	return err
+func (c *controller) ResendCode(email string) (string, error) {
+	_, err := c.ds.GetUser(email)
+	if err != nil {
+		return "", errors.New("unable to find user")
+	}
+
+	ac, err := c.ds.GetActivationCode(email)
+	now := time.Now()
+	if err == nil && ac != nil {
+		deadLine := ac.ExpiredAt.UTC()
+		if deadLine.After(now) {
+			return ac.Code, nil
+		}
+
+		err = c.ds.DeleteActivationCode(email, ac.Code)
+		if err != nil {
+			return "", err
+		}
+	}
+
+	code := c.generateActivationCode()
+	activation := models.ActivationCode{
+		Code:      code,
+		CreatedAt: now,
+		ExpiredAt: now.Add(time.Minute * time.Duration(MaxActivationCodeLifeSpanInMinutes)),
+		UserEmail: email,
+	}
+
+	if err = c.ds.InsertActivationCode(&activation); err != nil {
+		return "", err
+	}
+
+	return code, nil
 }

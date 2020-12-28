@@ -4,6 +4,7 @@ import (
 	"flag"
 	"log"
 	"math/rand"
+	"os"
 	"talktalk/handlers/authentication"
 	mysqlDS "talktalk/services/data/mysql"
 	sendGrid "talktalk/services/email/sendgrid"
@@ -36,7 +37,8 @@ func main() {
 			Username: viper.GetString(`mysql.user_name`),
 		},
 		Email: sendGrid.Config{
-			APIKey: viper.GetString(`email.api_key`),
+			APIKey: os.Getenv(`sendgrid_api_key`),
+			Email:  os.Getenv(`email`),
 		},
 	}
 	server, err := authentication.NewAuthorizationServer(cfg)
