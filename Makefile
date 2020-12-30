@@ -5,5 +5,4 @@ down:
 	docker-compose down
 
 .build:
-	go build -o ./bin/authentication/server ./cmd/authentication/
-	cp ./config/authentication_server.json ./bin/authentication/config.json
+	go build -o ./bin/gateway ./cmd/gateway/

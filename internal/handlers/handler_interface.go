@@ -2,6 +2,6 @@ package handlers
 
 // HandlerInterface ...
 type HandlerInterface interface {
-	Init(config interface{}) error
+	Init(cfg interface{}) error
 	Run() error
 }
