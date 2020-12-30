@@ -5,4 +5,4 @@ down:
 	docker-compose down
 
 .build:
-	go build -o ./bin/gateway ./cmd/gateway/
+	go build -o ./bin/talktalk main.go
