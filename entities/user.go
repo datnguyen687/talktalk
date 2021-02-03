@@ -1,0 +1,44 @@
+package entities
+
+import (
+	"time"
+)
+
+// UserDTO ...
+type UserDTO struct {
+	Email string `json:"email"`
+	Name  string `json:"name"`
+}
+
+// User ...
+type User struct {
+	ID        int        `json:"id" gorm:"column_name:id;type:serial;autoIncrement"`
+	Email     string     `json:"email" gorm:"column_name:email;type:text;not null;primaryKey"`
+	Name      string     `json:"name" gorm:"column_name:name;type:text"`
+	Status    int        `json:"status" gorm:"column_name:status;type:integer;not null"`
+	CreatedAt time.Time  `json:"created_at" gorm:"column_name:created_at;not null;type:timestamp"`
+	UpdatedAt *time.Time `json:"updated_at" gorm:"column_name:updated_at;type:timestamp"`
+}
+
+// TableName ...
+func (User) TableName() string {
+	return "users"
+}
+
+// userReader ...
+type userReader interface {
+}
+
+// UserWriter ...
+type userWriter interface {
+	Create(model *User) (*User, error)
+	Update(model *User) (*User, error)
+	Delete(email string) error
+	Transaction(func() error) error
+}
+
+// UserInterface ...
+type UserInterface interface {
+	userReader
+	userWriter
+}

@@ -1,6 +1,6 @@
-package database
+package handler
 
 // Interface ...
 type Interface interface {
-	Init(cfg interface{}) error
+	Run() error
 }
