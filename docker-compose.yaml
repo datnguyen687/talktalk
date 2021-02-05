@@ -1,0 +1,14 @@
+version: "3.3"
+
+services: 
+  talktalk_db:
+    image: mysql:latest
+    container_name: talktalk_db
+    restart: always
+    environment: 
+      MYSQL_DATABASE: 'talktalk'
+      # You can use whatever password you like
+      MYSQL_PASSWORD: 'root'
+      # Password for root access
+      MYSQL_ROOT_PASSWORD: 'password'
+    

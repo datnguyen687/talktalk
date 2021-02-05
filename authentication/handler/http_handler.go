@@ -3,13 +3,16 @@ package handler
 import (
 	"net/http"
 	"talktalk/authentication/handler/response"
+	"talktalk/authentication/usecase"
 
 	"github.com/gin-gonic/gin"
 )
 
 // NewHTTPAuthentication ...
-func NewHTTPAuthentication(cfg Config) Interface {
-	h := &handler{}
+func NewHTTPAuthentication(cfg Config, uc usecase.Interface) Interface {
+	h := &handler{
+		usecase: uc,
+	}
 
 	h.router = gin.Default()
 
@@ -19,7 +22,8 @@ func NewHTTPAuthentication(cfg Config) Interface {
 }
 
 type handler struct {
-	router *gin.Engine
+	router  *gin.Engine
+	usecase usecase.Interface
 }
 
 func (h *handler) Run() error {

@@ -8,11 +8,11 @@ import (
 
 // NewActivationCodeRepository ...
 func NewActivationCodeRepository(db *gorm.DB) entities.ActivationCodeInterface {
-	ur := &userRepository{
+	acr := &activationCodeRepository{
 		db: db,
 	}
 
-	return ur
+	return acr
 }
 
 type activationCodeRepository struct {

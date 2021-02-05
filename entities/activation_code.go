@@ -26,7 +26,7 @@ type activationCodeReader interface {
 type activationCodeWriter interface {
 	Create(model *ActivationCode) (*ActivationCode, error)
 	Update(model *ActivationCode) (*ActivationCode, error)
-	Delete(email string) error
+	Delete(id int) error
 	Transaction(func() error) error
 }
 
