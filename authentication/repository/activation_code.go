@@ -7,12 +7,16 @@ import (
 )
 
 // NewActivationCodeRepository ...
-func NewActivationCodeRepository(db *gorm.DB) entities.ActivationCodeInterface {
+func NewActivationCodeRepository(db *gorm.DB) (ActivationCodeRepositoryInterface, error) {
+	if err := db.AutoMigrate(&entities.ActivationCode{}); err != nil {
+		return nil, err
+	}
+
 	acr := &activationCodeRepository{
 		db: db,
 	}
 
-	return acr
+	return acr, nil
 }
 
 type activationCodeRepository struct {

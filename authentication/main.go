@@ -1,4 +1,4 @@
-package authentication
+package main
 
 import (
 	"fmt"
@@ -42,8 +42,15 @@ func main() {
 		panic(err)
 	}
 
-	activationCodeRespo := repository.NewActivationCodeRepository(db)
-	userRespo := repository.NewUserRepository(db)
+	activationCodeRespo, err := repository.NewActivationCodeRepository(db)
+	if err != nil {
+		panic(err)
+	}
+
+	userRespo, err := repository.NewUserRepository(db)
+	if err != nil {
+		panic(err)
+	}
 
 	uc := usecase.NewAuthenticationUsecase(userRespo, activationCodeRespo)
 

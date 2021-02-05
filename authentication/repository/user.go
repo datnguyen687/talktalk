@@ -7,12 +7,16 @@ import (
 )
 
 // NewUserRepository ...
-func NewUserRepository(db *gorm.DB) entities.UserInterface {
+func NewUserRepository(db *gorm.DB) (UserRepositoryInterface, error) {
+	if err := db.AutoMigrate(&entities.User{}); err != nil {
+		return nil, err
+	}
+
 	ur := &userRepository{
 		db: db,
 	}
 
-	return ur
+	return ur, nil
 }
 
 type userRepository struct {
@@ -65,4 +69,15 @@ func (ur *userRepository) Delete(email string) error {
 	db = db.Model(&entities.User{}).Where(`email=?`, email).Delete(&entities.User{})
 
 	return db.Error
+}
+
+func (ur *userRepository) GetUserByEmail(email string) (*entities.User, error) {
+	db := ur.db.Model(&entities.User{})
+
+	var data entities.User
+	if db = db.Where(`email=?`, email).Find(&data); db.Error != nil {
+		return nil, db.Error
+	}
+
+	return &data, nil
 }
