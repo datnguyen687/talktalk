@@ -7,7 +7,7 @@ import (
 )
 
 // NewUserRepository ...
-func NewUserRepository(db *gorm.DB) (UserRepositoryInterface, error) {
+func NewUserRepository(db *gorm.DB) (entities.UserInterface, error) {
 	if err := db.AutoMigrate(&entities.User{}); err != nil {
 		return nil, err
 	}
@@ -21,24 +21,6 @@ func NewUserRepository(db *gorm.DB) (UserRepositoryInterface, error) {
 
 type userRepository struct {
 	db *gorm.DB
-}
-
-func (ur *userRepository) Transaction(f func() error) error {
-	db := ur.db.Begin()
-
-	err := f()
-
-	if err != nil {
-		db.Rollback()
-		return err
-	}
-
-	if err = db.Commit().Error; err != nil {
-		db.Rollback()
-		return err
-	}
-
-	return nil
 }
 
 func (ur *userRepository) Create(model *entities.User) (*entities.User, error) {
@@ -74,10 +56,10 @@ func (ur *userRepository) Delete(email string) error {
 func (ur *userRepository) GetUserByEmail(email string) (*entities.User, error) {
 	db := ur.db.Model(&entities.User{})
 
-	var data entities.User
-	if db = db.Where(`email=?`, email).Find(&data); db.Error != nil {
+	data := &entities.User{}
+	if db = db.Where(`email=?`, email).First(data); db.Error != nil {
 		return nil, db.Error
 	}
 
-	return &data, nil
+	return data, nil
 }

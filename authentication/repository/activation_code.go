@@ -7,7 +7,7 @@ import (
 )
 
 // NewActivationCodeRepository ...
-func NewActivationCodeRepository(db *gorm.DB) (ActivationCodeRepositoryInterface, error) {
+func NewActivationCodeRepository(db *gorm.DB) (entities.ActivationCodeInterface, error) {
 	if err := db.AutoMigrate(&entities.ActivationCode{}); err != nil {
 		return nil, err
 	}
@@ -21,24 +21,6 @@ func NewActivationCodeRepository(db *gorm.DB) (ActivationCodeRepositoryInterface
 
 type activationCodeRepository struct {
 	db *gorm.DB
-}
-
-func (acr *activationCodeRepository) Transaction(f func() error) error {
-	db := acr.db.Begin()
-
-	err := f()
-
-	if err != nil {
-		db.Rollback()
-		return err
-	}
-
-	if err = db.Commit().Error; err != nil {
-		db.Rollback()
-		return err
-	}
-
-	return nil
 }
 
 func (acr *activationCodeRepository) Create(model *entities.ActivationCode) (*entities.ActivationCode, error) {

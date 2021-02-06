@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"talktalk/authentication/handler"
-	"talktalk/authentication/repository"
 	"talktalk/authentication/usecase"
 
 	log "github.com/sirupsen/logrus"
@@ -42,17 +41,10 @@ func main() {
 		panic(err)
 	}
 
-	activationCodeRespo, err := repository.NewActivationCodeRepository(db)
+	uc, err := usecase.NewAuthenticationUsecase(db)
 	if err != nil {
 		panic(err)
 	}
-
-	userRespo, err := repository.NewUserRepository(db)
-	if err != nil {
-		panic(err)
-	}
-
-	uc := usecase.NewAuthenticationUsecase(userRespo, activationCodeRespo)
 
 	cfg := handler.Config{
 		Port: viper.GetInt(`port`),

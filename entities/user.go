@@ -34,3 +34,21 @@ type User struct {
 func (User) TableName() string {
 	return "users"
 }
+
+// userReader ...
+type userReader interface {
+	GetUserByEmail(email string) (*User, error)
+}
+
+// UserWriter ...
+type userWriter interface {
+	Create(model *User) (*User, error)
+	Update(model *User) (*User, error)
+	Delete(email string) error
+}
+
+// UserInterface ...
+type UserInterface interface {
+	userReader
+	userWriter
+}

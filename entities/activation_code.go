@@ -2,6 +2,14 @@ package entities
 
 import "time"
 
+const (
+	// ActivationCodeLength ...
+	ActivationCodeLength int = 6
+
+	// ActivationCodeLifeSpaceInSec ...
+	ActivationCodeLifeSpaceInSec int = 900
+)
+
 // ActivationCode ...
 type ActivationCode struct {
 	Code      string    `json:"code" gorm:"column_name:code;type:VARCHAR(256);not null;primaryKey"`
@@ -15,4 +23,21 @@ type ActivationCode struct {
 // TableName ...
 func (ActivationCode) TableName() string {
 	return "activation_codes"
+}
+
+// activationCodeReader ...
+type activationCodeReader interface {
+}
+
+// activationCodeWriter ...
+type activationCodeWriter interface {
+	Create(model *ActivationCode) (*ActivationCode, error)
+	Update(model *ActivationCode) (*ActivationCode, error)
+	Delete(id int) error
+}
+
+// ActivationCodeInterface ...
+type ActivationCodeInterface interface {
+	activationCodeReader
+	activationCodeWriter
 }
